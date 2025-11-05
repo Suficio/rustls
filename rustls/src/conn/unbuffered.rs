@@ -3,7 +3,6 @@
 use alloc::vec::Vec;
 #[cfg(feature = "std")]
 use core::error::Error as StdError;
-use core::num::NonZeroUsize;
 use core::{fmt, mem};
 
 use super::UnbufferedConnectionCommon;
@@ -336,42 +335,19 @@ pub struct ReadTraffic<'c, 'i, Side: SideData> {
     _conn: &'c mut UnbufferedConnectionCommon<Side>,
 
     payload: Payload<'i>,
-
-    // `payload` needs to remain allocated in order to meet lifetime
-    // requirements of `next_record`
-    is_terminated: bool,
 }
 
 impl<'c, 'i, Side: SideData> ReadTraffic<'c, 'i, Side> {
     fn new(_conn: &'c mut UnbufferedConnectionCommon<Side>, payload: Payload<'i>) -> Self {
-        Self {
-            _conn,
-            payload,
-            is_terminated: false,
-        }
+        Self { _conn, payload }
     }
 
-    /// Decrypts and returns the next available app-data record
-    // TODO deprecate in favor of `Iterator` implementation, which requires in-place decryption
-    pub fn next_record(&mut self) -> Option<Result<AppDataRecord<'_>, Error>> {
-        if self.is_terminated {
-            return None;
-        }
-        self.is_terminated = true;
-        Some(Ok(AppDataRecord {
+    /// Returns available app-record
+    pub fn record(self) -> AppDataRecord<'i> {
+        AppDataRecord {
             discard: 0,
-            payload: self.payload.bytes(),
-        }))
-    }
-
-    /// Returns the payload size of the next app-data record *without* decrypting it
-    ///
-    /// Returns `None` if there are no more app-data records
-    pub fn peek_len(&self) -> Option<NonZeroUsize> {
-        if self.is_terminated {
-            return None;
+            payload: self.payload,
         }
-        NonZeroUsize::new(self.payload.bytes().len())
     }
 }
 
@@ -381,10 +357,6 @@ pub struct ReadEarlyData<'c, 'i, Side: SideData> {
 
     // for forwards compatibility; to support in-place decryption in the future
     _incoming_tls: &'i mut [u8],
-
-    // owner of the latest chunk obtained in `next_record`, as borrowed by
-    // `AppDataRecord`
-    chunk: Option<Vec<u8>>,
 }
 
 impl<'c, 'i> ReadEarlyData<'c, 'i, ServerConnectionData> {
@@ -395,29 +367,17 @@ impl<'c, 'i> ReadEarlyData<'c, 'i, ServerConnectionData> {
         Self {
             conn,
             _incoming_tls,
-            chunk: None,
         }
     }
 
     /// decrypts and returns the next available app-data record
-    // TODO deprecate in favor of `Iterator` implementation, which requires in-place decryption
-    pub fn next_record(&mut self) -> Option<Result<AppDataRecord<'_>, Error>> {
-        self.chunk = self.conn.pop_early_data();
-        self.chunk.as_ref().map(|chunk| {
-            Ok(AppDataRecord {
-                discard: 0,
-                payload: chunk,
-            })
-        })
-    }
-
-    /// returns the payload size of the next app-data record *without* decrypting it
-    ///
-    /// returns `None` if there are no more app-data records
-    pub fn peek_len(&self) -> Option<NonZeroUsize> {
+    pub fn next_record(&mut self) -> Option<AppDataRecord<'_>> {
         self.conn
-            .peek_early_data()
-            .and_then(|ch| NonZeroUsize::new(ch.len()))
+            .pop_early_data()
+            .map(|chunk| AppDataRecord {
+                discard: 0,
+                payload: Payload::Owned(chunk),
+            })
     }
 }
 
@@ -431,7 +391,7 @@ pub struct AppDataRecord<'i> {
     pub discard: usize,
 
     /// The payload of the app-data record
-    pub payload: &'i [u8],
+    pub payload: Payload<'i>,
 }
 
 /// Allows encrypting app-data
