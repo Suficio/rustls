@@ -1,5 +1,6 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::ops::Range;
 
 use crate::conn::Exporter;
 use crate::conn::kernel::KernelState;
@@ -14,6 +15,7 @@ use crate::hash_hs::HandshakeHash;
 use crate::log::{debug, error, trace, warn};
 use crate::msgs::alert::AlertMessagePayload;
 use crate::msgs::codec::Codec;
+use crate::msgs::deframer::buffers::{Delocator, Locator};
 use crate::msgs::enums::{AlertLevel, KeyUpdateRequest};
 use crate::msgs::fragmenter::MessageFragmenter;
 use crate::msgs::handshake::{HandshakeMessagePayload, ProtocolName};
@@ -187,6 +189,8 @@ impl CommonState {
         msg: InboundPlainMessage<'_>,
         state: Box<dyn State<Data>>,
         data: &mut Data,
+        plaintext_locator: &Locator,
+        received_plaintext: &mut Option<UnborrowedPayload>,
         sendable_plaintext: Option<&mut ChunkVecBuffer>,
     ) -> Result<Box<dyn State<Data>>, Error> {
         // Drop CCS messages during handshake in TLS1.3
@@ -243,6 +247,8 @@ impl CommonState {
         let mut cx = Context {
             common: self,
             data,
+            plaintext_locator,
+            received_plaintext,
             sendable_plaintext,
         };
         match state.handle(&mut cx, msg) {
@@ -500,12 +506,6 @@ impl CommonState {
         } else {
             self.send_msg_encrypt(m.into());
         }
-    }
-
-    pub(crate) fn take_received_plaintext(&mut self, bytes: Payload<'_>) {
-        self.temper_counters.received_app_data();
-        self.received_plaintext
-            .append(bytes.into_vec());
     }
 
     pub(crate) fn start_encryption_tls12(&mut self, secrets: &ConnectionSecrets, side: Side) {
@@ -890,9 +890,44 @@ pub(crate) trait State<Side>: Send + Sync {
 pub(crate) struct Context<'a, Data> {
     pub(crate) common: &'a mut CommonState,
     pub(crate) data: &'a mut Data,
+    pub(crate) plaintext_locator: &'a Locator,
+    pub(crate) received_plaintext: &'a mut Option<UnborrowedPayload>,
     /// Buffered plaintext. This is `Some` if any plaintext was written during handshake and `None`
     /// otherwise.
     pub(crate) sendable_plaintext: Option<&'a mut ChunkVecBuffer>,
+}
+
+impl<'a, Data> Context<'a, Data> {
+    pub(crate) fn receive_plaintext(&mut self, payload: Payload<'_>) {
+        self.common
+            .temper_counters
+            .received_app_data();
+        let previous = self
+            .received_plaintext
+            .replace(UnborrowedPayload::unborrow(self.plaintext_locator, payload));
+        debug_assert!(previous.is_none(), "overwrote plaintext data");
+    }
+}
+
+pub(crate) enum UnborrowedPayload {
+    Unborrowed(Range<usize>),
+    Owned(Vec<u8>),
+}
+
+impl UnborrowedPayload {
+    pub(crate) fn unborrow(locator: &Locator, payload: Payload<'_>) -> Self {
+        match payload {
+            Payload::Borrowed(payload) => Self::Unborrowed(locator.locate(payload)),
+            Payload::Owned(payload) => Self::Owned(payload),
+        }
+    }
+
+    pub(crate) fn reborrow<'b>(self, delocator: &Delocator<'b>) -> Payload<'b> {
+        match self {
+            Self::Unborrowed(range) => Payload::Borrowed(delocator.slice_from_range(&range)),
+            Self::Owned(payload) => Payload::Owned(payload),
+        }
+    }
 }
 
 /// Side of the connection.
