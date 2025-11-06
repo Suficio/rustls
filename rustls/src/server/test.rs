@@ -7,6 +7,7 @@ use crate::common_state::Context;
 use crate::enums::{CipherSuite, ProtocolVersion, SignatureScheme};
 use crate::error::{Error, PeerIncompatible};
 use crate::msgs::base::PayloadU16;
+use crate::msgs::deframer::buffers::Locator;
 use crate::msgs::enums::{Compression, NamedGroup};
 use crate::msgs::handshake::{
     ClientExtensions, ClientHelloPayload, HandshakeMessagePayload, HandshakePayload, KeyShareEntry,
@@ -40,6 +41,8 @@ fn test_process_client_hello(hello: ClientHelloPayload) -> Result<(), Error> {
         &mut Context {
             common: &mut CommonState::new(Side::Server),
             data: &mut ServerConnectionData::default(),
+            plaintext_locator: &Locator::new(&[]),
+            received_plaintext: &mut None,
             sendable_plaintext: None,
         },
     )
