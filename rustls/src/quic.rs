@@ -21,7 +21,7 @@ mod connection {
     use core::fmt::{self, Debug};
     use core::ops::{Deref, DerefMut};
 
-    use pki_types::{DnsName, ServerName};
+    use rustls_pki_types::{DnsName, ServerName};
 
     use super::{DirectionalKeys, KeyChange, Version};
     use crate::client::{ClientConfig, ClientConnectionData};

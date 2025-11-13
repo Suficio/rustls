@@ -4,7 +4,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::time::Duration;
 
-use pki_types::ServerName;
+use rustls_pki_types::ServerName;
 pub(crate) use server_hello::TLS12_HANDLER;
 use subtle::ConstantTimeEq;
 

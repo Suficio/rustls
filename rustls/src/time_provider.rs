@@ -2,7 +2,7 @@
 
 use core::fmt::Debug;
 
-use pki_types::UnixTime;
+use rustls_pki_types::UnixTime;
 
 /// An object that provides the current time.
 ///

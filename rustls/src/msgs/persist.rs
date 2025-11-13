@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::cmp;
 use core::time::Duration;
 
-use pki_types::{DnsName, UnixTime};
+use rustls_pki_types::{DnsName, UnixTime};
 use zeroize::Zeroizing;
 
 use crate::client::ClientCredentialResolver;

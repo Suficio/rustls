@@ -150,7 +150,7 @@ pub use cache::ServerSessionMemoryCache;
 mod sni_resolver {
     use core::fmt::Debug;
 
-    use pki_types::{DnsName, ServerName};
+    use rustls_pki_types::{DnsName, ServerName};
 
     use crate::crypto::{CertificateIdentity, Credentials, Identity, SelectedCredential};
     use crate::error::{Error, PeerIncompatible};

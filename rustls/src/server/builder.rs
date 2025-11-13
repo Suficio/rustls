@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-use pki_types::PrivateKeyDer;
+use rustls_pki_types::PrivateKeyDer;
 
 use super::server_conn::InvalidSniPolicy;
 use super::{ServerConfig, ServerCredentialResolver, handy};

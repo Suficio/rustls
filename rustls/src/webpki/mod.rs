@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::fmt;
 
-use pki_types::CertificateRevocationListDer;
+use rustls_pki_types::CertificateRevocationListDer;
 use webpki::{CertRevocationList, InvalidNameContext, OwnedCertRevocationList};
 
 use crate::error::{

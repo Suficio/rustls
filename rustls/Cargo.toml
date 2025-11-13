@@ -1,6 +1,6 @@
 [package]
 name = "rustls"
-version = "0.24.0-dev.0"
+version = "0.24.0-DI-906-8"
 edition = "2021"
 rust-version = "1.83"
 license = "Apache-2.0 OR ISC OR MIT"
@@ -16,13 +16,13 @@ exclude = ["src/testdata", "tests/**"]
 [features]
 default = ["log", "std"]
 
-aws-lc-rs = ["dep:aws-lc-rs", "webpki/aws-lc-rs", "aws-lc-rs/aws-lc-sys", "aws-lc-rs/prebuilt-nasm"]
+aws-lc-rs = ["dep:aws-lc-rs", "rustls-webpki/aws-lc-rs", "aws-lc-rs/aws-lc-sys", "aws-lc-rs/prebuilt-nasm"]
 brotli = ["dep:brotli", "dep:brotli-decompressor", "std"]
 custom-provider = []
-fips = ["aws-lc-rs", "aws-lc-rs?/fips", "webpki/aws-lc-rs-fips"]
+fips = ["aws-lc-rs", "aws-lc-rs?/fips", "rustls-webpki/aws-lc-rs-fips"]
 log = ["dep:log"]
-ring = ["dep:ring", "webpki/ring"]
-std = ["webpki/std", "pki-types/std", "once_cell/std"]
+ring = ["dep:ring", "rustls-webpki/ring"]
+std = ["rustls-webpki/std", "rustls-pki-types/std", "once_cell/std"]
 zlib = ["dep:zlib-rs"]
 
 [dependencies]
@@ -35,8 +35,8 @@ log = { workspace = true, optional = true }
 once_cell = { workspace = true }
 ring = { workspace = true, optional = true }
 subtle = { workspace = true }
-webpki = { workspace = true }
-pki-types = { workspace = true }
+rustls-webpki = { version = "=0.104.0-alpha.1", features = ["alloc"], default-features = false }
+rustls-pki-types = { version = "1.12", features = ["alloc"] }
 zeroize = { workspace = true }
 zlib-rs = { workspace = true, optional = true }
 

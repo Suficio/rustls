@@ -6,7 +6,7 @@ use core::fmt::Debug;
 use core::ops::Deref;
 use core::time::Duration;
 
-use pki_types::PrivateKeyDer;
+use rustls_pki_types::PrivateKeyDer;
 use zeroize::Zeroize;
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 
-use pki_types::CertificateRevocationListDer;
+use rustls_pki_types::CertificateRevocationListDer;
 use webpki::{CertRevocationList, ExpirationPolicy, RevocationCheckDepth, UnknownStatusPolicy};
 
 use crate::crypto::{CryptoProvider, Identity, WebPkiSupportedAlgorithms};

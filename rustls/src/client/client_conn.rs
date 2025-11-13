@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use core::ops::{Deref, DerefMut};
 use core::{fmt, mem};
 
-use pki_types::{ServerName, UnixTime};
+use rustls_pki_types::{ServerName, UnixTime};
 
 use super::handy::NoClientSessionStorage;
 use super::hs::{self, ClientHelloInput};
@@ -577,7 +577,7 @@ mod connection {
     use core::ops::{Deref, DerefMut};
     use std::io;
 
-    use pki_types::ServerName;
+    use rustls_pki_types::ServerName;
 
     use super::{ClientConnectionData, ClientExtensionsInput};
     use crate::client::EchStatus;

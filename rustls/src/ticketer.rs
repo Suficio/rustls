@@ -4,7 +4,7 @@ use core::mem;
 use core::time::Duration;
 use std::sync::{RwLock, RwLockReadGuard};
 
-use pki_types::UnixTime;
+use rustls_pki_types::UnixTime;
 
 use crate::crypto::TicketProducer;
 use crate::error::Error;

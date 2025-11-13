@@ -3,7 +3,9 @@ use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::iter;
 
-use pki_types::{AlgorithmIdentifier, CertificateDer, PrivateKeyDer, SubjectPublicKeyInfoDer};
+use rustls_pki_types::{
+    AlgorithmIdentifier, CertificateDer, PrivateKeyDer, SubjectPublicKeyInfoDer,
+};
 
 use super::CryptoProvider;
 use crate::client::{ClientCredentialResolver, CredentialRequest};

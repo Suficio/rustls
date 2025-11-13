@@ -630,7 +630,7 @@ pub mod version {
 /// Re-exports the contents of the [rustls-pki-types](https://docs.rs/rustls-pki-types) crate for easy access
 pub mod pki_types {
     #[doc(no_inline)]
-    pub use pki_types::*;
+    pub use rustls_pki_types::*;
 }
 
 /// APIs for implementing QUIC TLS

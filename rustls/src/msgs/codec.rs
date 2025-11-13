@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::fmt::Debug;
 use core::marker::PhantomData;
 
-use pki_types::{CertificateDer, SubjectPublicKeyInfoDer};
+use rustls_pki_types::{CertificateDer, SubjectPublicKeyInfoDer};
 
 use crate::error::InvalidMessage;
 

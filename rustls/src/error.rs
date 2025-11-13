@@ -7,7 +7,7 @@ use core::fmt;
 #[cfg(feature = "std")]
 use std::time::SystemTimeError;
 
-use pki_types::{AlgorithmIdentifier, EchConfigListBytes, ServerName, UnixTime};
+use rustls_pki_types::{AlgorithmIdentifier, EchConfigListBytes, ServerName, UnixTime};
 use webpki::ExtendedKeyUsage;
 
 use crate::enums::{AlertDescription, ContentType, HandshakeType};

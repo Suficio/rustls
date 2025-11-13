@@ -2,7 +2,7 @@ use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use pki_types::ServerName;
+use rustls_pki_types::ServerName;
 use subtle::ConstantTimeEq;
 
 use super::client_conn::ClientConnectionData;

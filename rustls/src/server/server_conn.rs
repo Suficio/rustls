@@ -8,7 +8,7 @@ use core::ops::{Deref, DerefMut};
 #[cfg(feature = "std")]
 use std::io;
 
-use pki_types::{DnsName, UnixTime};
+use rustls_pki_types::{DnsName, UnixTime};
 
 use super::hs;
 use crate::builder::ConfigBuilder;
@@ -601,7 +601,7 @@ mod connection {
     use core::ops::{Deref, DerefMut};
     use std::io;
 
-    use pki_types::DnsName;
+    use rustls_pki_types::DnsName;
 
     use super::{Accepted, Accepting, ServerConfig, ServerConnectionData, ServerExtensionsInput};
     use crate::KeyingMaterialExporter;

@@ -6,7 +6,7 @@ use core::borrow::Borrow;
 use core::fmt;
 use core::ops::Deref;
 
-use pki_types::ServerName;
+use rustls_pki_types::ServerName;
 
 use super::{ClientCredentialResolver, Tls12Resumption};
 use crate::bs_debug;

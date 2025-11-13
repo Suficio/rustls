@@ -7,7 +7,7 @@ use core::ops::{Deref, DerefMut};
 use core::time::Duration;
 use core::{fmt, iter};
 
-use pki_types::{CertificateDer, DnsName};
+use rustls_pki_types::{CertificateDer, DnsName};
 
 use crate::crypto::cipher::Payload;
 use crate::crypto::{ActiveKeyExchange, SecureRandom, SelectedCredential};
@@ -386,7 +386,7 @@ pub(crate) enum HostNamePayload {
 
 impl HostNamePayload {
     fn read(r: &mut Reader<'_>) -> Result<Self, InvalidMessage> {
-        use pki_types::ServerName;
+        use rustls_pki_types::ServerName;
         let raw = PayloadU16::<NonEmpty>::read(r)?;
 
         match ServerName::try_from(raw.0.as_slice()) {

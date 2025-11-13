@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use alloc::{fmt, format};
 
-use pki_types::{CertificateDer, TrustAnchor};
+use rustls_pki_types::{CertificateDer, TrustAnchor};
 use webpki::anchor_from_trusted_cert;
 
 use super::pki_error;

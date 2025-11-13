@@ -2,7 +2,7 @@ use alloc::boxed::Box;
 use alloc::vec;
 use alloc::vec::Vec;
 
-use pki_types::{DnsName, EchConfigListBytes, ServerName};
+use rustls_pki_types::{DnsName, EchConfigListBytes, ServerName};
 use subtle::ConstantTimeEq;
 
 use crate::client::tls13;

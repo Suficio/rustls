@@ -1,4 +1,4 @@
-use pki_types::ServerName;
+use rustls_pki_types::ServerName;
 
 use super::CredentialRequest;
 use crate::crypto::SelectedCredential;
@@ -37,7 +37,7 @@ mod cache {
     use alloc::collections::VecDeque;
     use core::fmt;
 
-    use pki_types::ServerName;
+    use rustls_pki_types::ServerName;
 
     use crate::lock::Mutex;
     use crate::msgs::persist;

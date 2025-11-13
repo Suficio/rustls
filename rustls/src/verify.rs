@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::fmt::Debug;
 
-use pki_types::{CertificateDer, ServerName, SubjectPublicKeyInfoDer, UnixTime};
+use rustls_pki_types::{CertificateDer, ServerName, SubjectPublicKeyInfoDer, UnixTime};
 
 use crate::crypto::Identity;
 use crate::enums::{CertificateType, SignatureScheme};

@@ -3,7 +3,7 @@ use alloc::vec;
 use core::time::Duration;
 
 pub(crate) use client_hello::TLS13_HANDLER;
-use pki_types::UnixTime;
+use rustls_pki_types::UnixTime;
 use subtle::ConstantTimeEq;
 
 use super::hs::{self, HandshakeHashOrBuffer, ServerContext};

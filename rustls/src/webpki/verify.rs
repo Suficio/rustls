@@ -1,7 +1,7 @@
 use alloc::vec::Vec;
 use core::fmt;
 
-use pki_types::{
+use rustls_pki_types::{
     CertificateDer, ServerName, SignatureVerificationAlgorithm, SubjectPublicKeyInfoDer, UnixTime,
 };
 use webpki::ExtendedKeyUsage;
