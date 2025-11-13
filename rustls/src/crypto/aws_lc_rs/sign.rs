@@ -6,7 +6,7 @@ use core::fmt::{self, Debug, Formatter};
 
 use aws_lc_rs::rand::SystemRandom;
 use aws_lc_rs::signature::{self, EcdsaKeyPair, Ed25519KeyPair, KeyPair, RsaKeyPair};
-use pki_types::{PrivateKeyDer, PrivatePkcs8KeyDer, SubjectPublicKeyInfoDer, alg_id};
+use rustls_pki_types::{PrivateKeyDer, PrivatePkcs8KeyDer, SubjectPublicKeyInfoDer, alg_id};
 
 #[cfg(any(test, bench))]
 use crate::crypto::CryptoProvider;
@@ -337,7 +337,7 @@ fn load_key(
 mod tests {
     use alloc::format;
 
-    use pki_types::{PrivatePkcs1KeyDer, PrivateSec1KeyDer};
+    use rustls_pki_types::{PrivatePkcs1KeyDer, PrivateSec1KeyDer};
 
     use super::*;
     use crate::crypto::aws_lc_rs::DEFAULT_PROVIDER;

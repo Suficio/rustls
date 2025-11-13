@@ -424,8 +424,8 @@ mod tests {
     use std::prelude::v1::*;
     use std::{format, println, vec};
 
-    use pki_types::pem::PemObject;
-    use pki_types::{CertificateDer, CertificateRevocationListDer};
+    use rustls_pki_types::pem::PemObject;
+    use rustls_pki_types::{CertificateDer, CertificateRevocationListDer};
 
     use super::WebPkiClientVerifier;
     use crate::error::CertRevocationListError;

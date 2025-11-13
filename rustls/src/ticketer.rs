@@ -147,7 +147,7 @@ mod tests {
     use core::sync::atomic::{AtomicU8, Ordering};
     use core::time::Duration;
 
-    use pki_types::UnixTime;
+    use rustls_pki_types::UnixTime;
 
     use super::*;
 

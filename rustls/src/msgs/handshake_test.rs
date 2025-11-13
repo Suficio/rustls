@@ -2,7 +2,7 @@ use core::time::Duration;
 use std::prelude::v1::*;
 use std::{format, println, vec};
 
-use pki_types::{CertificateDer, DnsName};
+use rustls_pki_types::{CertificateDer, DnsName};
 
 use super::base::{PayloadU8, PayloadU16, PayloadU24};
 use super::codec::{Codec, Reader, put_u16};

@@ -1318,7 +1318,7 @@ mod tests {
     use std::prelude::v1::*;
     use std::{println, vec};
 
-    use pki_types::ServerName;
+    use rustls_pki_types::ServerName;
 
     use super::{
         AlertDescription, CertRevocationListError, Error, InconsistentKeys, InvalidMessage,

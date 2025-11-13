@@ -4,7 +4,7 @@ use std::prelude::v1::*;
 use std::sync::OnceLock;
 use std::vec;
 
-use pki_types::{CertificateDer, ServerName};
+use rustls_pki_types::{CertificateDer, ServerName};
 
 use crate::client::{ClientConfig, ClientConnection, Resumption, Tls12Resumption};
 use crate::crypto::cipher::{MessageEncrypter, PlainMessage};

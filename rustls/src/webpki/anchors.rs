@@ -127,7 +127,7 @@ impl fmt::Debug for RootCertStore {
 fn root_cert_store_debug() {
     use core::iter;
 
-    use pki_types::Der;
+    use rustls_pki_types::Der;
 
     let ta = TrustAnchor {
         subject: Der::from_slice(&[]),

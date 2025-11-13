@@ -203,7 +203,7 @@ mod tests {
     use core::time::Duration;
     use std::prelude::v1::*;
 
-    use pki_types::{CertificateDer, ServerName, UnixTime};
+    use rustls_pki_types::{CertificateDer, ServerName, UnixTime};
 
     use super::NoClientSessionStorage;
     use crate::TEST_PROVIDERS;

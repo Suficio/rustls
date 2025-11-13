@@ -549,7 +549,7 @@ impl Codec<'_> for CommonServerSessionValue {
 
 #[cfg(test)]
 mod tests {
-    use pki_types::CertificateDer;
+    use rustls_pki_types::CertificateDer;
 
     use super::*;
     use crate::crypto::CertificateIdentity;

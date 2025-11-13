@@ -1,7 +1,7 @@
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
 
-use pki_types::PrivateKeyDer;
+use rustls_pki_types::PrivateKeyDer;
 use webpki::aws_lc_rs as webpki_algs;
 
 use super::signer::SigningKey;

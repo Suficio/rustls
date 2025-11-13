@@ -310,7 +310,7 @@ dependencies = [
  "base64",
  "env_logger",
  "nix",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "rustls-webpki 0.104.0-alpha.1",
 ]
 
@@ -2424,7 +2424,7 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.24.0-DI-906-8"
+version = "0.24.0-DI-906-9"
 dependencies = [
  "aws-lc-rs",
  "bencher",
@@ -2455,7 +2455,7 @@ name = "rustls-bench"
 version = "0.1.0"
 dependencies = [
  "clap",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "rustls-graviola",
  "rustls-test",
  "tikv-jemallocator",
@@ -2473,7 +2473,7 @@ dependencies = [
  "itertools 0.14.0",
  "rayon",
  "rustc-hash",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "rustls-fuzzing-provider",
  "rustls-test",
 ]
@@ -2484,7 +2484,7 @@ version = "0.0.1"
 dependencies = [
  "regex",
  "ring",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "tokio",
 ]
 
@@ -2498,7 +2498,7 @@ dependencies = [
  "log",
  "mio",
  "rcgen",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "serde",
  "tokio",
  "webpki-roots 1.0.4",
@@ -2509,7 +2509,7 @@ name = "rustls-fuzzing-provider"
 version = "0.1.0"
 dependencies = [
  "env_logger",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
 ]
 
 [[package]]
@@ -2531,7 +2531,7 @@ dependencies = [
  "num-bigint",
  "once_cell",
  "openssl",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
 ]
 
 [[package]]
@@ -2574,7 +2574,7 @@ dependencies = [
  "rand_core 0.6.4",
  "rcgen",
  "rsa",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "sha2",
  "signature",
  "subtle",
@@ -2587,7 +2587,7 @@ name = "rustls-provider-test"
 version = "0.1.0"
 dependencies = [
  "hex",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "rustls-provider-example",
  "serde",
  "serde_json",
@@ -2600,7 +2600,7 @@ dependencies = [
  "env_logger",
  "log",
  "num-bigint",
- "rustls 0.24.0-DI-906-8",
+ "rustls 0.24.0-DI-906-9",
  "rustls-pki-types",
  "rustls-webpki 0.104.0-alpha.1",
  "x509-parser",
