@@ -160,11 +160,11 @@ pub trait MessageDecrypter: Send + Sync {
 pub trait MessageEncrypter: Send + Sync {
     /// Encrypt the given TLS message `msg`, using the sequence number
     /// `seq` which can be used to derive a unique [`Nonce`].
-    fn encrypt(
+    fn encrypt<'a>(
         &mut self,
-        msg: OutboundPlainMessage<'_>,
+        msg: OutboundPlainMessage<'a>,
         seq: u64,
-    ) -> Result<OutboundOpaqueMessage, Error>;
+    ) -> Result<OutboundOpaqueMessage<'a>, Error>;
 
     /// Return the length of the ciphertext that results from encrypting plaintext of
     /// length `payload_len`
@@ -442,14 +442,14 @@ impl PlainMessage {
         })
     }
 
-    /// Convert into an unencrypted [`OutboundOpaqueMessage`] (without decrypting).
-    pub fn into_unencrypted_opaque(self) -> OutboundOpaqueMessage {
-        OutboundOpaqueMessage {
-            version: self.version,
-            typ: self.typ,
-            payload: PrefixedPayload::from(self.payload.bytes()),
-        }
-    }
+    // /// Convert into an unencrypted [`OutboundOpaqueMessage`] (without decrypting).
+    // pub fn into_unencrypted_opaque(self) -> OutboundOpaqueMessage {
+    //     OutboundOpaqueMessage {
+    //         version: self.version,
+    //         typ: self.typ,
+    //         payload: PrefixedPayload::from(self.payload.bytes()),
+    //     }
+    // }
 
     /// Borrow as an [`InboundPlainMessage`].
     pub fn borrow_inbound(&self) -> InboundPlainMessage<'_> {
@@ -460,14 +460,14 @@ impl PlainMessage {
         }
     }
 
-    /// Borrow as an [`OutboundPlainMessage`].
-    pub fn borrow_outbound(&self) -> OutboundPlainMessage<'_> {
-        OutboundPlainMessage {
-            version: self.version,
-            typ: self.typ,
-            payload: self.payload.bytes().into(),
-        }
-    }
+    // /// Borrow as an [`OutboundPlainMessage`].
+    // pub fn borrow_outbound(&self) -> OutboundPlainMessage<'_> {
+    //     OutboundPlainMessage {
+    //         version: self.version,
+    //         typ: self.typ,
+    //         payload: self.payload.bytes().into(),
+    //     }
+    // }
 }
 
 /// An externally length'd payload
@@ -532,11 +532,11 @@ impl fmt::Debug for Payload<'_> {
 struct InvalidMessageEncrypter {}
 
 impl MessageEncrypter for InvalidMessageEncrypter {
-    fn encrypt(
+    fn encrypt<'a>(
         &mut self,
-        _m: OutboundPlainMessage<'_>,
+        _m: OutboundPlainMessage<'a>,
         _seq: u64,
-    ) -> Result<OutboundOpaqueMessage, Error> {
+    ) -> Result<OutboundOpaqueMessage<'a>, Error> {
         Err(Error::EncryptError)
     }
 

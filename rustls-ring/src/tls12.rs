@@ -279,22 +279,19 @@ impl MessageDecrypter for GcmMessageDecrypter {
 }
 
 impl MessageEncrypter for GcmMessageEncrypter {
-    fn encrypt(
+    fn encrypt<'a>(
         &mut self,
-        msg: OutboundPlainMessage<'_>,
+        msg: OutboundPlainMessage<'a>,
         seq: u64,
-    ) -> Result<OutboundOpaqueMessage, Error> {
-        let total_len = self.encrypted_payload_len(msg.payload.len());
-        let mut payload = PrefixedPayload::with_capacity(total_len);
-
+    ) -> Result<OutboundOpaqueMessage<'a>, Error> {
+        let mut payload = msg.payload;
         let nonce = aead::Nonce::assume_unique_for_key(Nonce::new(&self.iv, seq).to_array()?);
-        let aad = aead::Aad::from(make_tls12_aad(seq, msg.typ, msg.version, msg.payload.len()));
-        payload.extend_from_slice(&nonce.as_ref()[4..]);
-        payload.extend_from_chunks(&msg.payload);
+        let aad = aead::Aad::from(make_tls12_aad(seq, msg.typ, msg.version, payload.len()));
+        payload.prefix_from_slice(&nonce.as_ref()[4..]);
 
         self.enc_key
             .seal_in_place_separate_tag(nonce, aad, &mut payload.as_mut()[GCM_EXPLICIT_NONCE_LEN..])
-            .map(|tag| payload.extend_from_slice(tag.as_ref()))
+            .map(|tag| payload.extend(tag.as_ref()))
             .map_err(|_| Error::EncryptError)?;
 
         Ok(OutboundOpaqueMessage {
@@ -365,18 +362,15 @@ impl MessageDecrypter for ChaCha20Poly1305MessageDecrypter {
 }
 
 impl MessageEncrypter for ChaCha20Poly1305MessageEncrypter {
-    fn encrypt(
+    fn encrypt<'a>(
         &mut self,
-        msg: OutboundPlainMessage<'_>,
+        msg: OutboundPlainMessage<'a>,
         seq: u64,
-    ) -> Result<OutboundOpaqueMessage, Error> {
-        let total_len = self.encrypted_payload_len(msg.payload.len());
-        let mut payload = PrefixedPayload::with_capacity(total_len);
-
+    ) -> Result<OutboundOpaqueMessage<'a>, Error> {
+        let mut payload = msg.payload;
         let nonce =
             aead::Nonce::assume_unique_for_key(Nonce::new(&self.enc_offset, seq).to_array()?);
-        let aad = aead::Aad::from(make_tls12_aad(seq, msg.typ, msg.version, msg.payload.len()));
-        payload.extend_from_chunks(&msg.payload);
+        let aad = aead::Aad::from(make_tls12_aad(seq, msg.typ, msg.version, payload.len()));
 
         self.enc_key
             .seal_in_place_append_tag(nonce, aad, &mut payload)
