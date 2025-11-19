@@ -401,24 +401,6 @@ impl CommonState {
         self.queue_tls_message(em);
     }
 
-    fn send_plain_non_buffering(&mut self, payload: OutboundChunks<'_>) -> usize {
-        debug_assert!(self.may_send_application_data);
-        debug_assert!(self.record_layer.is_encrypting());
-
-        // Limit on `sendable_tls` should apply to encrypted data but is enforced
-        // for plaintext data instead which does not include cipher+record overhead.
-        let len = self
-            .sendable_tls
-            .apply_limit(payload.len());
-        if len == 0 {
-            // Don't send empty fragments.
-            return 0;
-        }
-
-        self.send_appdata_encrypt(payload.split_at(len).0);
-        len
-    }
-
     /// Mark the connection as ready to send application data.
     ///
     /// Also flush `sendable_plaintext` if it is `Some`.
@@ -755,7 +737,19 @@ impl CommonState {
             return sendable_plaintext.append_limited_copy(payload);
         }
 
-        self.send_plain_non_buffering(payload)
+        // Limit on `sendable_tls` should apply to encrypted data but is enforced
+        // for plaintext data instead which does not include cipher+record overhead.
+        let len = self
+            .sendable_tls
+            .apply_limit(payload.len());
+        if len == 0 {
+            // Don't send empty fragments.
+            return 0;
+        }
+
+        debug_assert!(self.record_layer.is_encrypting());
+        self.send_appdata_encrypt(payload.split_at(len).0);
+        len
     }
 
     pub(crate) fn send_early_plaintext(&mut self, data: &[u8]) -> usize {
