@@ -415,7 +415,7 @@ impl CommonState {
         self.queue_tls_message(em);
     }
 
-    fn send_plain_non_buffering(&mut self, payload: OutboundChunks<'_>, limit: Limit) -> usize {
+    fn send_plain_non_buffering(&mut self, payload: OutboundChunks<'_>) -> usize {
         debug_assert!(self.may_send_application_data);
         debug_assert!(self.record_layer.is_encrypting());
 
@@ -424,7 +424,7 @@ impl CommonState {
             return 0;
         }
 
-        self.send_appdata_encrypt(payload, limit)
+        self.send_appdata_encrypt(payload, Limit::Yes)
     }
 
     /// Mark the connection as ready to send application data.
@@ -456,7 +456,10 @@ impl CommonState {
         }
 
         while let Some(buf) = sendable_plaintext.pop() {
-            self.send_plain_non_buffering(buf.as_slice().into(), Limit::No);
+            if buf.is_empty() {
+                continue;
+            }
+            self.send_appdata_encrypt(buf.as_slice().into(), Limit::No);
         }
     }
 
@@ -760,7 +763,7 @@ impl CommonState {
             return sendable_plaintext.append_limited_copy(payload);
         }
 
-        self.send_plain_non_buffering(payload, Limit::Yes)
+        self.send_plain_non_buffering(payload)
     }
 
     pub(crate) fn send_early_plaintext(&mut self, data: &[u8]) -> usize {
