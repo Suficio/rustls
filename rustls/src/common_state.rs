@@ -345,31 +345,17 @@ impl CommonState {
     }
 
     /// Like send_msg_encrypt, but operate on an appdata directly.
-    fn send_appdata_encrypt(&mut self, payload: OutboundChunks<'_>, limit: Limit) -> usize {
-        // Here, the limit on sendable_tls applies to encrypted data,
-        // but we're respecting it for plaintext data -- so we'll
-        // be out by whatever the cipher+record overhead is.  That's a
-        // constant and predictable amount, so it's not a terrible issue.
-        let len = match limit {
-            #[cfg(feature = "std")]
-            Limit::Yes => self
-                .sendable_tls
-                .apply_limit(payload.len()),
-            Limit::No => payload.len(),
-        };
-
+    fn send_appdata_encrypt(&mut self, payload: OutboundChunks<'_>) {
         let iter = self
             .message_fragmenter
             .fragment_payload(
                 ContentType::ApplicationData,
                 ProtocolVersion::TLSv1_2,
-                payload.split_at(len).0,
+                payload,
             );
         for m in iter {
             self.send_single_fragment(m);
         }
-
-        len
     }
 
     fn send_single_fragment(&mut self, m: OutboundPlainMessage<'_>) {
@@ -419,12 +405,18 @@ impl CommonState {
         debug_assert!(self.may_send_application_data);
         debug_assert!(self.record_layer.is_encrypting());
 
-        if payload.is_empty() {
+        // Limit on `sendable_tls` should apply to encrypted data but is enforced
+        // for plaintext data instead which does not include cipher+record overhead.
+        let len = self
+            .sendable_tls
+            .apply_limit(payload.len());
+        if len == 0 {
             // Don't send empty fragments.
             return 0;
         }
 
-        self.send_appdata_encrypt(payload, Limit::Yes)
+        self.send_appdata_encrypt(payload.split_at(len).0);
+        len
     }
 
     /// Mark the connection as ready to send application data.
@@ -459,7 +451,7 @@ impl CommonState {
             if buf.is_empty() {
                 continue;
             }
-            self.send_appdata_encrypt(buf.as_slice().into(), Limit::No);
+            self.send_appdata_encrypt(buf.as_slice().into());
         }
     }
 
@@ -775,7 +767,18 @@ impl CommonState {
             return 0;
         }
 
-        self.send_appdata_encrypt(data.into(), Limit::Yes)
+        // Limit on `sendable_tls` should apply to encrypted data but is enforced
+        // for plaintext data instead which does not include cipher+record overhead.
+        let len = self
+            .sendable_tls
+            .apply_limit(data.len());
+        if len == 0 {
+            // Don't send empty fragments.
+            return 0;
+        }
+
+        self.send_appdata_encrypt(data[..len].into());
+        len
     }
 }
 
@@ -970,12 +973,6 @@ impl Side {
 pub(crate) enum Protocol {
     Tcp,
     Quic,
-}
-
-enum Limit {
-    #[cfg(feature = "std")]
-    Yes,
-    No,
 }
 
 /// Tracking technically-allowed protocol actions
