@@ -460,14 +460,14 @@ impl PlainMessage {
         }
     }
 
-    /// Borrow as an [`OutboundPlainMessage`].
-    pub fn borrow_outbound(&self) -> OutboundPlainMessage<'_> {
-        OutboundPlainMessage {
-            version: self.version,
-            typ: self.typ,
-            payload: self.payload.bytes().into(),
-        }
-    }
+    // /// Borrow as an [`OutboundPlainMessage`].
+    // pub fn borrow_outbound(&self) -> OutboundPlainMessage<'_> {
+    //     OutboundPlainMessage {
+    //         version: self.version,
+    //         typ: self.typ,
+    //         payload: self.payload.bytes().into(),
+    //     }
+    // }
 }
 
 /// An externally length'd payload

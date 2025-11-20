@@ -6,7 +6,7 @@ use aws_lc_rs::{aead, hkdf, hmac};
 use crate::crypto;
 use crate::crypto::cipher::{
     AeadKey, InboundOpaqueMessage, InboundPlainMessage, Iv, MessageDecrypter, MessageEncrypter,
-    Nonce, OutboundOpaqueMessage, OutboundPlainMessage, PrefixedPayload, Tls13AeadAlgorithm,
+    Nonce, OutboundOpaqueMessage, OutboundPlainMessage, Tls13AeadAlgorithm,
     UnsupportedOperationError, make_tls13_aad,
 };
 use crate::crypto::tls13::{Hkdf, HkdfExpander, OkmBlock, OutputLengthError};
@@ -226,13 +226,10 @@ impl MessageEncrypter for AeadMessageEncrypter {
         msg: OutboundPlainMessage<'_>,
         seq: u64,
     ) -> Result<OutboundOpaqueMessage, Error> {
-        let total_len = self.encrypted_payload_len(msg.payload.len());
-        let mut payload = PrefixedPayload::with_capacity(total_len);
-
+        let mut payload = msg.payload;
         let nonce = aead::Nonce::assume_unique_for_key(Nonce::new(&self.iv, seq).to_array()?);
-        let aad = aead::Aad::from(make_tls13_aad(total_len));
-        payload.extend_from_chunks(&msg.payload);
-        payload.extend_from_slice(&msg.typ.to_array());
+        let aad = aead::Aad::from(make_tls13_aad(payload.len()));
+        payload.extend(&msg.typ.to_array());
 
         self.enc_key
             .seal_in_place_append_tag(nonce, aad, &mut payload)
@@ -287,13 +284,10 @@ impl MessageEncrypter for GcmMessageEncrypter {
         msg: OutboundPlainMessage<'_>,
         seq: u64,
     ) -> Result<OutboundOpaqueMessage, Error> {
-        let total_len = self.encrypted_payload_len(msg.payload.len());
-        let mut payload = PrefixedPayload::with_capacity(total_len);
-
+        let mut payload = msg.payload;
         let nonce = aead::Nonce::assume_unique_for_key(Nonce::new(&self.iv, seq).to_array()?);
-        let aad = aead::Aad::from(make_tls13_aad(total_len));
-        payload.extend_from_chunks(&msg.payload);
-        payload.extend_from_slice(&msg.typ.to_array());
+        let aad = aead::Aad::from(make_tls13_aad(payload.len()));
+        payload.extend(&msg.typ.to_array());
 
         self.enc_key
             .seal_in_place_append_tag(nonce, aad, &mut payload)

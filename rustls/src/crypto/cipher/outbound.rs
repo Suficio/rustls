@@ -2,7 +2,6 @@ use alloc::vec::Vec;
 
 use crate::enums::{ContentType, ProtocolVersion};
 use crate::msgs::message::HEADER_SIZE;
-use crate::record_layer::RecordLayer;
 
 /// A TLS frame, named `TLSPlaintext` in the standard.
 ///
@@ -16,24 +15,25 @@ pub struct OutboundPlainMessage<'a> {
     /// The protocol version of this message.
     pub version: ProtocolVersion,
     /// The payload of this message.
-    pub payload: OutboundChunks<'a>,
+    pub payload: PrefixedPayload,
+    payload_lifetime: &'a (),
 }
 
-impl OutboundPlainMessage<'_> {
-    pub(crate) fn encoded_len(&self, record_layer: &RecordLayer) -> usize {
-        HEADER_SIZE + record_layer.encrypted_len(self.payload.len())
-    }
+// impl OutboundPlainMessage<'_> {
+//     pub(crate) fn encoded_len(&self, record_layer: &RecordLayer) -> usize {
+//         HEADER_SIZE + record_layer.encrypted_len(self.payload.len())
+//     }
 
-    pub(crate) fn to_unencrypted_opaque(&self) -> OutboundOpaqueMessage {
-        let mut payload = PrefixedPayload::with_capacity(self.payload.len());
-        payload.extend_from_chunks(&self.payload);
-        OutboundOpaqueMessage {
-            version: self.version,
-            typ: self.typ,
-            payload,
-        }
-    }
-}
+//     pub(crate) fn to_unencrypted_opaque(&self) -> OutboundOpaqueMessage {
+//         let mut payload = PrefixedPayload::with_capacity(self.payload.len());
+//         payload.extend_from_chunks(&self.payload);
+//         OutboundOpaqueMessage {
+//             version: self.version,
+//             typ: self.typ,
+//             payload,
+//         }
+//     }
+// }
 
 /// A collection of borrowed plaintext slices.
 ///
@@ -170,84 +170,107 @@ pub struct OutboundOpaqueMessage {
     pub payload: PrefixedPayload,
 }
 
-impl OutboundOpaqueMessage {
-    /// Encode this message to a vector of bytes.
-    pub fn encode(self) -> Vec<u8> {
-        let length = self.payload.len() as u16;
-        let mut encoded_payload = self.payload.0;
-        encoded_payload[0] = self.typ.into();
-        encoded_payload[1..3].copy_from_slice(&self.version.to_array());
-        encoded_payload[3..5].copy_from_slice(&(length).to_be_bytes());
-        encoded_payload
-    }
+/// Store outbound payload with required prefix and suffix padding
+///
+/// Prefix padding is used to encode the header and encryption nonces, while
+/// suffixes are used to encode encryption tags.
+///
+/// ```text
+/// | MAX_PREFIX_OVERHEAD + HEADER_SIZE     |  data   | MAX_SUFFIX_OVERHEAD |
+/// | - prefix_offset -> | ------------------ payload_len -> |              |
+/// |                    | ======== PrefixedPayload ======== |              |
+/// ```
+#[derive(Clone, Debug)]
+pub struct PrefixedPayload {
+    prefix_offset: usize,
+    payload: Vec<u8>,
+    payload_len: usize,
 }
 
-/// A byte buffer with space reserved at the front for a TLS message header.
-#[derive(Clone, Debug)]
-pub struct PrefixedPayload(Vec<u8>);
-
 impl PrefixedPayload {
-    /// Create a new value with the given payload capacity.
+    /// Prepare [`PrefixedPayload`] with given payload capacity.
     ///
-    /// (The actual capacity of the returned value will be at least `HEADER_SIZE + capacity`.)
-    pub fn with_capacity(capacity: usize) -> Self {
-        let mut prefixed_payload = Vec::with_capacity(HEADER_SIZE + capacity);
-        prefixed_payload.resize(HEADER_SIZE, 0);
-        Self(prefixed_payload)
+    /// Initially will account for a payload with reserved space for
+    /// encryption overhead.
+    ///
+    /// ```text
+    /// | MAX_PREFIX_OVERHEAD + HEADER_SIZE | data                | MAX_SUFFIX_OVERHEAD |
+    /// | ---------------- prefix_offset -> | ---- payload_len -> |                     |
+    /// |                                   | = PrefixedPayload = |                     |
+    /// ```
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
+        Self {
+            prefix_offset: MAX_PREFIX_OVERHEAD,
+            payload: Vec::with_capacity(capacity + REQUIRED_OVERHEAD),
+            payload_len: 0,
+        }
     }
 
-    /// Append bytes from a slice.
-    pub fn extend_from_slice(&mut self, slice: &[u8]) {
-        self.0.extend_from_slice(slice)
+    /// Writes a prefix not exceeding [`MAX_PREFIX_OVERHEAD`] to the payload
+    ///
+    /// ```text
+    /// | MAX_PREFIX_OVERHEAD + HEADER_SIZE       | data  | MAX_SUFFIX_OVERHEAD |
+    /// | -- prefix_offset -> | ---------- payload_len -> |                     |
+    /// |                     | ==== PrefixedPayload ==== |                     |
+    /// ```
+    pub(crate) fn prefix_from_slice(&mut self, slice: &[u8]) {
+        let len = slice.len();
+        assert!(len <= self.prefix_offset, "insufficient prefix overhead");
+
+        self.prefix_offset -= len;
+        self.payload_len += len;
+        self.payload[self.prefix_offset..self.prefix_offset + len].copy_from_slice(slice);
     }
 
-    /// Append bytes from an `OutboundChunks`.
-    pub fn extend_from_chunks(&mut self, chunks: &OutboundChunks<'_>) {
-        chunks.copy_to_vec(&mut self.0)
+    /// Writes a header at the prefix, see [`Self::prefix_from_slice`] for details
+    pub(crate) fn prefix_header(&mut self, typ: ContentType, version: ProtocolVersion) {
+        assert!(
+            HEADER_SIZE <= self.prefix_offset,
+            "insufficient header prefix overhead"
+        );
+
+        let payload_len = self.payload_len;
+        self.prefix_offset -= HEADER_SIZE;
+        self.payload_len += HEADER_SIZE;
+        let header = &mut self.payload[self.prefix_offset..self.prefix_offset + HEADER_SIZE];
+
+        header[0] = typ.into();
+        header[1..3].copy_from_slice(&version.to_array());
+        header[3..5].copy_from_slice(&payload_len.to_be_bytes());
     }
 
-    /// Truncate the payload to the given length (plus header).
-    pub fn truncate(&mut self, len: usize) {
-        self.0.truncate(len + HEADER_SIZE)
-    }
-
-    fn len(&self) -> usize {
-        self.0.len() - HEADER_SIZE
+    pub(crate) fn len(&self) -> usize {
+        self.payload_len
     }
 }
 
 impl AsRef<[u8]> for PrefixedPayload {
     fn as_ref(&self) -> &[u8] {
-        &self.0[HEADER_SIZE..]
+        &self.payload[self.prefix_offset..self.prefix_offset + self.payload_len]
     }
 }
 
 impl AsMut<[u8]> for PrefixedPayload {
     fn as_mut(&mut self) -> &mut [u8] {
-        &mut self.0[HEADER_SIZE..]
+        &mut self.payload[self.prefix_offset..self.prefix_offset + self.payload_len]
     }
 }
 
 impl<'a> Extend<&'a u8> for PrefixedPayload {
     fn extend<T: IntoIterator<Item = &'a u8>>(&mut self, iter: T) {
-        self.0.extend(iter)
+        for byte in iter {
+            self.payload[self.payload_len] = *byte;
+            self.payload_len += 1;
+        }
     }
 }
 
-impl From<&[u8]> for PrefixedPayload {
-    fn from(content: &[u8]) -> Self {
-        let mut payload = Vec::with_capacity(HEADER_SIZE + content.len());
-        payload.extend(&[0u8; HEADER_SIZE]);
-        payload.extend(content);
-        Self(payload)
-    }
-}
-
-impl<const N: usize> From<&[u8; N]> for PrefixedPayload {
-    fn from(content: &[u8; N]) -> Self {
-        Self::from(&content[..])
-    }
-}
+/// Maximum prefix encoding overhead from supported encryption algorithms
+const MAX_PREFIX_OVERHEAD: usize = 8;
+/// Maximum suffix encoding overhead from supported encryption algorithms
+const MAX_SUFFIX_OVERHEAD: usize = 17;
+/// Required overhead to encode prefix, suffix, and header
+const REQUIRED_OVERHEAD: usize = MAX_PREFIX_OVERHEAD + HEADER_SIZE + MAX_SUFFIX_OVERHEAD;
 
 #[cfg(test)]
 mod tests {
