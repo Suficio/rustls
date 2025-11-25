@@ -427,22 +427,20 @@ impl CommonState {
 
     /// Send a raw TLS message, fragmenting it if needed.
     pub(crate) fn send_msg(&mut self, m: Message<'_>, must_encrypt: bool) {
-        {
-            if let Protocol::Quic = self.protocol {
-                debug_assert!(
-                    matches!(
-                        m.payload,
-                        MessagePayload::Handshake { .. } | MessagePayload::HandshakeFlight(_)
-                    ),
-                    "QUIC uses TLS for the cryptographic handshake only"
-                );
-                let mut bytes = Vec::new();
-                m.payload.encode(&mut bytes);
-                self.quic
-                    .hs_queue
-                    .push_back((must_encrypt, bytes));
-                return;
-            }
+        if self.is_quic() {
+            debug_assert!(
+                matches!(
+                    m.payload,
+                    MessagePayload::Handshake { .. } | MessagePayload::HandshakeFlight(_)
+                ),
+                "QUIC uses TLS for the cryptographic handshake only"
+            );
+            let mut bytes = Vec::new();
+            m.payload.encode(&mut bytes);
+            self.quic
+                .hs_queue
+                .push_back((must_encrypt, bytes));
+            return;
         }
         if !must_encrypt {
             let msg = &m.into();
