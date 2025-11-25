@@ -756,11 +756,6 @@ impl CommonState {
         debug_assert!(self.early_traffic);
         debug_assert!(self.record_layer.is_encrypting());
 
-        if data.is_empty() {
-            // Don't send empty fragments.
-            return 0;
-        }
-
         // Limit on `sendable_tls` should apply to encrypted data but is enforced
         // for plaintext data instead which does not include cipher+record overhead.
         let len = self
