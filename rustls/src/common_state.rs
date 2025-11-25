@@ -540,8 +540,7 @@ impl CommonState {
         err: impl Into<Error>,
     ) -> Error {
         debug_assert!(!self.sent_fatal_alert);
-        let m = Message::build_alert(AlertLevel::Fatal, desc);
-        self.send_msg(m, self.record_layer.is_encrypting());
+        self.send_alert(AlertLevel::Fatal, desc);
         self.sent_fatal_alert = true;
         err.into()
     }
@@ -573,7 +572,11 @@ impl CommonState {
     }
 
     fn send_warning_alert(&mut self, desc: AlertDescription) {
-        let m = Message::build_alert(AlertLevel::Warning, desc);
+        self.send_alert(AlertLevel::Warning, desc)
+    }
+
+    fn send_alert(&mut self, level: AlertLevel, desc: AlertDescription) {
+        let m = Message::build_alert(level, desc);
         self.send_msg(m, self.record_layer.is_encrypting());
     }
 
