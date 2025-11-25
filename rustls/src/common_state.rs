@@ -243,7 +243,7 @@ impl CommonState {
                     "Sending warning alert {:?}",
                     AlertDescription::NoRenegotiation
                 );
-                self.send_warning_alert(AlertDescription::NoRenegotiation);
+                self.send_alert(AlertLevel::Warning, AlertDescription::NoRenegotiation);
                 return Ok(state);
             }
         }
@@ -549,7 +549,7 @@ impl CommonState {
         debug!("Sending warning alert {:?}", AlertDescription::CloseNotify);
         self.sent_fatal_alert = true;
         self.has_sent_close_notify = true;
-        self.send_warning_alert(AlertDescription::CloseNotify);
+        self.send_alert(AlertLevel::Warning, AlertDescription::CloseNotify);
     }
 
     pub(crate) fn eager_send_close_notify(
@@ -559,10 +559,6 @@ impl CommonState {
         self.send_close_notify();
         self.check_required_size(outgoing_tls, [].into_iter())?;
         Ok(self.write_buffered_fragments(outgoing_tls))
-    }
-
-    fn send_warning_alert(&mut self, desc: AlertDescription) {
-        self.send_alert(AlertLevel::Warning, desc)
     }
 
     fn send_alert(&mut self, level: AlertLevel, desc: AlertDescription) {
