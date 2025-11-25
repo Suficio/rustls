@@ -576,14 +576,17 @@ impl CommonState {
             self.quic.alert = Some(desc);
             return;
         }
-        let m = Message::build_alert(level, desc);
+        let msg = &Message::build_alert(level, desc).into();
+        let iter = self
+            .message_fragmenter
+            .fragment_message(msg);
         if self.record_layer.is_encrypting() {
-            self.send_msg_encrypt(m.into());
+            // Alerts are always sendable -- never quashed by a PreEncryptAction.
+            for m in iter {
+                let em = self.record_layer.encrypt_outgoing(m);
+                self.queue_tls_message(em);
+            }
         } else {
-            let msg = &m.into();
-            let iter = self
-                .message_fragmenter
-                .fragment_message(msg);
             for m in iter {
                 self.queue_tls_message(m.to_unencrypted_opaque());
             }
