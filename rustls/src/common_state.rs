@@ -592,7 +592,17 @@ impl CommonState {
             return;
         }
         let m = Message::build_alert(level, desc);
-        self.send_msg(m, self.record_layer.is_encrypting());
+        if self.record_layer.is_encrypting() {
+            self.send_msg_encrypt(m.into());
+        } else {
+            let msg = &m.into();
+            let iter = self
+                .message_fragmenter
+                .fragment_message(msg);
+            for m in iter {
+                self.queue_tls_message(m.to_unencrypted_opaque());
+            }
+        }
     }
 
     fn check_required_size<'a>(
