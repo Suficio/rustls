@@ -435,22 +435,18 @@ impl CommonState {
     pub(crate) fn send_msg(&mut self, m: Message<'_>, must_encrypt: bool) {
         {
             if let Protocol::Quic = self.protocol {
-                if let MessagePayload::Alert(alert) = m.payload {
-                    self.quic.alert = Some(alert.description);
-                } else {
-                    debug_assert!(
-                        matches!(
-                            m.payload,
-                            MessagePayload::Handshake { .. } | MessagePayload::HandshakeFlight(_)
-                        ),
-                        "QUIC uses TLS for the cryptographic handshake only"
-                    );
-                    let mut bytes = Vec::new();
-                    m.payload.encode(&mut bytes);
-                    self.quic
-                        .hs_queue
-                        .push_back((must_encrypt, bytes));
-                }
+                debug_assert!(
+                    matches!(
+                        m.payload,
+                        MessagePayload::Handshake { .. } | MessagePayload::HandshakeFlight(_)
+                    ),
+                    "QUIC uses TLS for the cryptographic handshake only"
+                );
+                let mut bytes = Vec::new();
+                m.payload.encode(&mut bytes);
+                self.quic
+                    .hs_queue
+                    .push_back((must_encrypt, bytes));
                 return;
             }
         }
@@ -576,8 +572,12 @@ impl CommonState {
     }
 
     fn send_alert(&mut self, level: AlertLevel, desc: AlertDescription) {
+        if self.is_quic() {
+            self.quic.alert = Some(desc);
+            return;
+        }
         let m = Message::build_alert(level, desc);
-        self.send_msg(m, self.record_layer.is_encrypting());
+        self.send_msg(m, self.record_layer.is_encrypting())
     }
 
     fn check_required_size<'a>(
