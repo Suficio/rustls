@@ -411,9 +411,6 @@ impl CommonState {
         self.may_send_application_data = true;
         if let Some(sendable_plaintext) = sendable_plaintext {
             while let Some(buf) = sendable_plaintext.pop() {
-                if buf.is_empty() {
-                    continue;
-                }
                 self.send_appdata_encrypt(buf.as_slice().into());
             }
         }
