@@ -336,14 +336,8 @@ impl CommonState {
             .message_fragmenter
             .fragment_message(&m);
         for m in iter {
-            if m.typ == ContentType::Alert {
-                // Alerts are always sendable -- never quashed by a PreEncryptAction.
-                let em = self.record_layer.encrypt_outgoing(m);
-                self.queue_tls_message(em);
-            } else {
-                if let Ok(m) = self.encrypt_outgoing_fragment(m) {
-                    self.queue_tls_message(m);
-                }
+            if let Ok(m) = self.encrypt_outgoing_fragment(m) {
+                self.queue_tls_message(m);
             }
         }
     }
