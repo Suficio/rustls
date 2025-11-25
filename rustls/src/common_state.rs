@@ -243,7 +243,7 @@ impl CommonState {
                     "Sending warning alert {:?}",
                     AlertDescription::NoRenegotiation
                 );
-                self.send_warning_alert_no_log(AlertDescription::NoRenegotiation);
+                self.send_warning_alert(AlertDescription::NoRenegotiation);
                 return Ok(state);
             }
         }
@@ -560,7 +560,7 @@ impl CommonState {
         debug!("Sending warning alert {:?}", AlertDescription::CloseNotify);
         self.sent_fatal_alert = true;
         self.has_sent_close_notify = true;
-        self.send_warning_alert_no_log(AlertDescription::CloseNotify);
+        self.send_warning_alert(AlertDescription::CloseNotify);
     }
 
     pub(crate) fn eager_send_close_notify(
@@ -572,7 +572,7 @@ impl CommonState {
         Ok(self.write_buffered_fragments(outgoing_tls))
     }
 
-    fn send_warning_alert_no_log(&mut self, desc: AlertDescription) {
+    fn send_warning_alert(&mut self, desc: AlertDescription) {
         let m = Message::build_alert(AlertLevel::Warning, desc);
         self.send_msg(m, self.record_layer.is_encrypting());
     }
