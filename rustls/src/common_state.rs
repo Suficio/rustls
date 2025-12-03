@@ -356,7 +356,9 @@ impl CommonState {
                 let em = self.record_layer.encrypt_outgoing(m);
                 self.queue_tls_message(em);
             } else {
-                let _ = self.send_single_fragment(m);
+                if let Ok(m) = self.send_single_fragment(m) {
+                    self.queue_tls_message(m);
+                }
             }
         }
     }
@@ -372,7 +374,9 @@ impl CommonState {
                 payload.split_at(len).0,
             );
         for m in iter {
-            let _ = self.send_single_fragment(m);
+            if let Ok(m) = self.send_single_fragment(m) {
+                self.queue_tls_message(m);
+            }
         }
 
         len
@@ -381,7 +385,7 @@ impl CommonState {
     fn send_single_fragment(
         &mut self,
         m: EncodedMessage<OutboundPlain<'_>>,
-    ) -> Result<(), EncryptError> {
+    ) -> Result<EncodedMessage<OutboundOpaque>, EncryptError> {
         match self
             .record_layer
             .next_pre_encrypt_action()
@@ -413,9 +417,7 @@ impl CommonState {
             }
         };
 
-        let em = self.record_layer.encrypt_outgoing(m);
-        self.queue_tls_message(em);
-        Ok(())
+        Ok(self.record_layer.encrypt_outgoing(m))
     }
 
     /// Send plaintext application data, fragmenting and
